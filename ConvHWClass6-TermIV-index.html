@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conversation Class · Week 3 · Class 6 — U.S. Classroom Language</title>
+<style>
+  :root{
+    --purple:#5b2c91; --purple-dark:#3d1d63; --purple-light:#7e4cc4;
+    --lilac:#f3edfb; --lilac-mid:#e4d6f7; --gold:#f5b921;
+    --ink:#2b2440; --muted:#6b6480; --good:#1f9d57; --bad:#d64545;
+    --card:#ffffff; --line:#e0d4f0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:linear-gradient(150deg,#ede4fb 0%,#f7f3fc 55%,#fdf6e9 100%);
+    color:var(--ink);min-height:100vh;padding:24px 14px;line-height:1.6;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+  .card{
+    background:var(--card);border-radius:20px;padding:32px 30px;
+    box-shadow:0 14px 40px rgba(61,29,99,.14);border:1px solid var(--line);
+  }
+  .screen{display:none;}
+  .screen.active{display:block;animation:fade .35s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  .brand{font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--purple-light);font-weight:700;margin-bottom:6px;}
+  h1{font-size:1.6rem;color:var(--purple-dark);line-height:1.25;margin-bottom:4px;}
+  .sub{color:var(--muted);font-size:.95rem;margin-bottom:22px;}
+  h2{font-size:1.15rem;color:var(--purple-dark);margin-bottom:4px;
+    display:flex;align-items:center;gap:9px;}
+  .tag{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+    background:var(--lilac-mid);color:var(--purple);padding:3px 9px;
+    border-radius:20px;font-weight:700;}
+  .intro-note{color:var(--muted);font-size:.9rem;margin:8px 0 18px;}
+
+  .progress{display:flex;gap:6px;margin-bottom:22px;}
+  .progress span{flex:1;height:7px;border-radius:6px;background:var(--lilac-mid);}
+  .progress span.done{background:var(--purple-light);}
+  .progress span.now{background:var(--gold);}
+
+  .passage{background:var(--lilac);border-left:4px solid var(--purple-light);
+    border-radius:0 12px 12px 0;padding:16px 18px;margin:14px 0 20px;font-size:.96rem;}
+  .passage h3{color:var(--purple-dark);font-size:1.02rem;margin-bottom:8px;}
+  .passage .dateline{font-size:.78rem;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--purple-light);font-weight:700;margin-bottom:6px;}
+  .passage p{margin-bottom:10px;}
+  .passage .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.86rem;
+    background:#fff;border:1px solid var(--line);border-radius:9px;padding:12px 14px;
+    line-height:1.7;white-space:pre-wrap;margin-bottom:10px;}
+
+  .videobox{position:relative;width:100%;padding-top:56.25%;border-radius:13px;
+    overflow:hidden;background:#000;margin:14px 0 8px;border:1px solid var(--line);}
+  .videobox iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0;}
+  .videolink{display:inline-block;font-size:.86rem;color:var(--purple);
+    font-weight:700;text-decoration:underline;margin-bottom:18px;}
+
+  .q{margin:18px 0;padding-bottom:6px;}
+  .q .qtext{font-weight:600;margin-bottom:10px;}
+  .opt{display:block;border:1.6px solid var(--line);border-radius:11px;
+    padding:11px 14px;margin:7px 0;cursor:pointer;transition:.15s;font-size:.94rem;}
+  .opt:hover{border-color:var(--purple-light);background:var(--lilac);}
+  .opt.sel{border-color:var(--purple);background:var(--lilac-mid);font-weight:600;}
+  .opt.correct{border-color:var(--good);background:#e5f6ec;}
+  .opt.wrong{border-color:var(--bad);background:#fbe7e7;}
+  .opt input{margin-right:9px;}
+
+  .gap{margin:14px 0;font-size:.96rem;}
+  .gap label{font-weight:600;display:block;margin-bottom:6px;}
+  select,input[type=text],textarea{
+    font-family:inherit;font-size:.95rem;width:100%;padding:10px 12px;
+    border:1.6px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);
+  }
+  select:focus,input:focus,textarea:focus{outline:none;border-color:var(--purple-light);}
+  textarea{resize:vertical;min-height:140px;}
+  .wordbank{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 6px;}
+  .chip{background:var(--lilac-mid);color:var(--purple-dark);font-weight:600;
+    font-size:.84rem;padding:5px 11px;border-radius:20px;}
+
+  .feedback{margin-top:14px;padding:13px 15px;border-radius:11px;font-size:.92rem;display:none;}
+  .feedback.show{display:block;}
+  .feedback.ok{background:#e5f6ec;color:#176b3d;border:1px solid #b6e2c6;}
+  .feedback.no{background:#fbe7e7;color:#9c2b2b;border:1px solid #f0bcbc;}
+  .feedback.info{background:var(--lilac);color:var(--purple-dark);border:1px solid var(--line);}
+
+  .btn{background:var(--purple);color:#fff;border:none;border-radius:12px;
+    padding:13px 26px;font-size:1rem;font-weight:700;cursor:pointer;
+    transition:.18s;font-family:inherit;margin-top:18px;}
+  .btn:hover{background:var(--purple-dark);transform:translateY(-1px);}
+  .btn.ghost{background:var(--lilac-mid);color:var(--purple-dark);}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;}
+
+  .speak-box{background:var(--lilac);border-radius:14px;padding:18px;margin:14px 0;}
+  .timer{font-size:2.1rem;font-weight:800;color:var(--purple-dark);text-align:center;margin:6px 0;}
+  .mic-status{text-align:center;color:var(--muted);font-size:.9rem;margin-bottom:8px;}
+  .transcript{background:#fff;border:1.4px dashed var(--line);border-radius:10px;
+    padding:11px 13px;min-height:62px;font-size:.92rem;color:var(--ink);margin-top:10px;}
+  .pulse{display:inline-block;width:11px;height:11px;border-radius:50%;
+    background:var(--bad);margin-right:6px;animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+  .scorebig{font-size:3rem;font-weight:800;color:var(--purple-dark);text-align:center;}
+  .scoreline{text-align:center;color:var(--muted);margin-bottom:18px;}
+  .breakdown{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:14px 0;}
+  .breakdown div{display:flex;justify-content:space-between;padding:10px 15px;
+    border-bottom:1px solid var(--line);font-size:.93rem;}
+  .breakdown div:last-child{border-bottom:none;font-weight:700;background:var(--lilac);}
+
+  .checklist{font-size:.88rem;color:var(--muted);margin:8px 0 0;padding-left:18px;}
+  .checklist li{margin:3px 0;}
+  .success{background:#e5f6ec;border:1px solid #b6e2c6;color:#176b3d;
+    border-radius:12px;padding:16px;text-align:center;font-weight:600;display:none;margin-top:16px;}
+  .success.show{display:block;}
+  .tip{font-size:.86rem;color:var(--muted);font-style:italic;margin-top:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ============ CONFIG ============ -->
+<script>
+const CONFIG = {
+  FORM_URL: "https://docs.google.com/forms/d/e/1FAIpQLSftntztcKJlKFeJTtu7CiHniOUFFfGBmRhclyzqz7CGUMwkPQ/formResponse",
+  ENTRY: {
+    studentName:  "entry.154629934",
+    classCode:    "entry.771629595",
+    session:      "entry.1564061356",
+    listening:    "entry.1994438750",
+    vocab:        "entry.1169985852",
+    writing:      "entry.66378887",
+    speaking:     "entry.665897330",
+    grammar:      "entry.1528226896",
+    percent:      "entry.543147037",
+    writingText:  "entry.301386877",
+    aiFeedback:   "entry.1035810181",
+    teacher:      "entry.1451249480"
+  },
+  CLASSES: [
+    {code:"3096", label:"3096 \u2014 Morning (9:00 \u2013 10:30 AM) \u2014 Laura Ebel",   teacher:"Laura Ebel"},
+    {code:"3091", label:"3091 \u2014 Evening (6:30 \u2013 8:00 PM) \u2014 Laura Ebel",   teacher:"Laura Ebel"}
+  ],
+  SESSION_LABEL: "Week 3 - Class 6"
+};
+</script>
+
+<div class="card">
+
+<!-- ===================== SCREEN 0 — START ===================== -->
+<div class="screen active" id="s0">
+  <div class="brand">English Class · SQA Education</div>
+  <h1>U.S. Classroom Language</h1>
+  <div class="sub">Conversation Course · Week 3 · Class 6<br>
+  <strong>Parent-Teacher Communication · Advanced Modals</strong></div>
+
+  <div class="passage" style="border-left-color:var(--gold);">
+    <h3>Here's the plan 👋</h3>
+    <p>Five short sections. Today you'll watch <strong>U.S. Classroom Language</strong> —
+    how American teachers use polite, coded commentary that immigrant parents often read as praise —
+    then practice attendance and discipline vocabulary and <strong>advanced modals</strong>:
+    <em>was supposed to</em>, <em>should have</em>, <em>ought to have</em>, <em>might want to</em>.
+    The big section is <strong>speaking</strong> — you'll leave a voicemail for the school counselor.</p>
+    <p>Work at your own pace. Nothing submits until you press Finish.</p>
+  </div>
+
+  <div class="gap">
+    <label>First, your name</label>
+    <input type="text" id="studentName" placeholder="Type your full name">
+  </div>
+  <div class="gap">
+    <label>Your class</label>
+    <select id="classSelect"></select>
+  </div>
+  <button class="btn" onclick="go(1)">Start →</button>
+</div>
+
+<!-- ===================== SCREEN 1 — READING ===================== -->
+<div class="screen" id="s1">
+  <div class="progress"><span class="now"></span><span></span><span></span><span></span><span></span></div>
+  <h2><span class="tag">1 · Watch</span> Listening Comprehension</h2>
+  <div class="intro-note">Watch the video, then answer the questions. You can replay it as many times as you need.</div>
+
+  <div class="videobox"><iframe src="https://drive.google.com/file/d/1G3J9mA6ygwaKTFHljCEIL8iOOZEU40-v/preview" allow="autoplay" allowfullscreen></iframe></div><a class="videolink" href="https://drive.google.com/file/d/1G3J9mA6ygwaKTFHljCEIL8iOOZEU40-v/view" target="_blank" rel="noopener">Open the video in a new tab &rarr;</a>
+
+  <div id="readingQs"></div>
+  <button class="btn" onclick="go(2)">Next: Vocabulary →</button>
+</div>
+
+<!-- ===================== SCREEN 2 — VOCABULARY ===================== -->
+<div class="screen" id="s2">
+  <div class="progress"><span class="done"></span><span class="now"></span><span></span><span></span><span></span></div>
+  <h2><span class="tag">2 · Vocabulary</span> The Counselor's Letter</h2>
+  <div class="intro-note">Read the letter from the school counselor, then fill in each blank with the best word from the box. Each word is used <strong>only once</strong>.</div>
+  <div class="passage">
+    <div class="dateline">📩 Counseling Office</div>
+    <h3>From: Mr. Harrison, School Counselor</h3>
+    <p>Dear Mr. and Mrs. Kovalenko,</p>
+    <p>I am reaching out from the counseling office to discuss some sudden changes in Max's recent
+    <strong>(1)</strong> ______ records. Over the past three weeks, Max has accumulated four unexcused
+    absences during first period. Furthermore, his math teacher noted that his frequent morning
+    <strong>(2)</strong> ______ is disrupting the classroom environment, as he consistently misses the
+    first ten minutes of the lesson. This lack of reliability is beginning to severely hinder his
+    overall <strong>(3)</strong> ______, and his mid-term grades are dropping as a result.</p>
+    <p>According to our school district's core seventh-grade math <strong>(4)</strong> ______, the
+    concepts introduced this month form the foundation for high school algebra. As clearly stated in
+    the teacher's course <strong>(5)</strong> ______, students who miss instruction time cannot easily
+    make up lab points. At this time, we want to prevent this from turning into a formal
+    <strong>(6)</strong> ______ matter that would require a suspension. We believe Max is simply
+    struggling with some minor <strong>(7)</strong> ______ habits regarding cell phone distractions
+    late at night. Let's schedule a virtual call this week to fix this schedule gap together.</p>
+    <p>Sincerely,<br>Mr. Harrison, School Counselor</p>
+  </div>
+  <div class="wordbank" id="wordbank"></div>
+  <div id="vocabQs"></div>
+  <button class="btn" onclick="go(3)">Next: Writing →</button>
+</div>
+
+<!-- ===================== SCREEN 3 — WRITING ===================== -->
+<div class="screen" id="s3">
+  <div class="progress"><span class="done"></span><span class="done"></span><span class="now"></span><span></span><span></span></div>
+  <h2><span class="tag">3 · Write</span> Replying to Mr. Davis</h2>
+  <div class="intro-note">Read the email below from Max's Pre-Algebra teacher, then write a formal reply that is <strong>7 to 9 sentences</strong> long. Respond to the concerns about Max's behavior and missing homework, acknowledge what Max <em>was supposed to do</em> but failed to accomplish, and diplomatically suggest an intervention plan.</div>
+
+  <div class="passage">
+    <div class="dateline">📩 Incoming message</div>
+    <h3>From: Mr. Davis (Pre-Algebra)</h3>
+    <p><em>Dear Parent, Max is struggling to complete his independent problem-solving tasks. Yesterday,
+    he was distracted by his phone and copied answers from a peer instead of following the assignment
+    guidelines. He claims he didn't know the work was due, but the deadline has been on our digital
+    calendar for weeks. How can we ensure Max changes this behavior at home?</em></p>
+    <p>💬 <strong>Your modals:</strong> <em>was supposed to</em> · <em>should have</em> ·
+    <em>ought to have</em> · <em>might want to</em></p>
+  </div>
+
+  <textarea id="writingText" placeholder="Dear Mr. Davis,&#10;&#10;Thank you for letting me know. Max was supposed to check the digital calendar every evening, and he should have &hellip;"></textarea>
+  <ul class="checklist">
+    <li>A formal reply of 7–9 sentences</li>
+    <li>Acknowledge what Max <em>was supposed to do</em> but did not do</li>
+    <li>Diplomatically suggest an intervention plan</li>
+    <li>At least 2 vocabulary words from this week's list</li>
+    <li>At least 2 advanced modal structures (<em>was supposed to</em>, <em>should have</em>, <em>might want to</em>)</li>
+  </ul>
+  <div class="feedback info" id="writingFb"></div>
+  <button class="btn" onclick="checkWriting()">Check my writing</button>
+  <button class="btn ghost" id="writingNext" style="display:none;" onclick="go(4)">Next: Speaking →</button>
+</div>
+
+<!-- ===================== SCREEN 4 — SPEAKING ===================== -->
+<div class="screen" id="s4">
+  <div class="progress"><span class="done"></span><span class="done"></span><span class="done"></span><span class="now"></span><span></span></div>
+  <h2><span class="tag">4 · Speak ⭐</span> Voicemail for Mr. Harrison</h2>
+  <div class="intro-note">Record a <strong>1 to 2 minute voicemail</strong> for the school counselor, Mr. Harrison. <strong>The scenario:</strong> you received the warning letter about Max's morning arrival issues and drop in grades. You discovered that Max has been playing video games late at night, which is why he is oversleeping and missing his first-period class. <strong>Your goal:</strong> acknowledge the school's concern, say what Max <em>should have done</em>, explain the new rules you are setting at home, and suggest a quick time to connect. Use at least <strong>two past modals</strong> (<em>should have</em> / <em>ought to have</em>) and a <strong>present expectation modal</strong> (<em>was supposed to</em> / <em>is supposed to</em>).</div>
+
+  <div class="speak-box">
+    <div class="timer" id="timer">0:00</div>
+    <div class="mic-status" id="micStatus">Tap the button and start speaking.</div>
+    <div class="btnrow" style="justify-content:center;">
+      <button class="btn" id="recBtn" style="margin-top:6px;" onclick="toggleRec()">🎤 Start speaking</button>
+    </div>
+    <div class="transcript" id="transcript">Your words will appear here…</div>
+  </div>
+  <div class="tip">Tip: if the microphone doesn't start, allow mic access in your
+  browser, or just keep going — your "Finish" button still works.</div>
+  <div class="feedback info" id="speakFb"></div>
+  <button class="btn" onclick="go(5)">Next: Language in Use →</button>
+</div>
+
+<!-- ===================== SCREEN 5 — LANGUAGE IN USE ===================== -->
+<div class="screen" id="s5">
+  <div class="progress"><span class="done"></span><span class="done"></span><span class="done"></span><span class="done"></span><span class="now"></span></div>
+  <h2><span class="tag">5 · Language</span> Advanced Modals: Pick the Correct Sentence</h2>
+  <div class="intro-note">Choose the sentence option that is grammatically correct and best conveys the intended meaning of accountability, obligation, or advice.</div>
+
+  <div id="luQs"></div>
+  <button class="btn" onclick="finish()">See my results &amp; finish →</button>
+</div>
+
+<!-- ===================== SCREEN 6 — RESULTS ===================== -->
+<div class="screen" id="s6">
+  <div class="brand">English Class · SQA Education</div>
+  <h1 style="margin-bottom:14px;">Nice work! 🎉</h1>
+  <div class="scorebig" id="finalPct">0%</div>
+  <div class="scoreline" id="finalLine">—</div>
+  <div class="breakdown" id="breakdown"></div>
+  <div style="background:var(--lilac);border:1px solid var(--line);border-radius:11px;
+       padding:12px 15px;font-size:.88rem;color:var(--purple-dark);margin:4px 0 8px;">
+    ℹ️ This score shows the <strong>75 auto-graded points</strong> (reading,
+    vocabulary, speaking, language). Your <strong>writing is worth 25 more points</strong>
+    and will be graded by your teacher — so your final mark will be higher than the number above.
+  </div>
+  <p style="font-size:.9rem;color:var(--muted);">Your answers, writing, and spoken
+  story are recorded below. Press Finish to send everything to your teacher.</p>
+  <button class="btn" id="finishBtn" onclick="submitAll()">Finish →</button>
+  <div class="success" id="successMsg">✓ Sent! Your homework is complete. You can close this page.</div>
+</div>
+
+</div>
+<div style="text-align:center;color:var(--muted);font-size:.8rem;margin-top:16px;">
+  SQA Education · Conversation Course · Term IV 2026
+</div>
+</div>
+
+<iframe name="sqa_sink" style="display:none;"></iframe>
+
+<script>
+/* ---------- content banks ---------- */
+const READING_LABEL="Listening comprehension";
+const SPEAKING_LABEL="Speaking \u2014 voicemail \u2b50";
+const LU_LABEL="Advanced modals";
+const SPEAK_TARGET=60;
+const SPEAK_TIER2=40;
+const SPEAK_TIER3=20;
+const LESSON_WORDS=["attendance", "tardiness", "academic progress", "curriculum", "syllabus", "disciplinary", "behavioral", "intervention", "rubric", "conference", "was supposed to", "is supposed to", "should have", "ought to have", "might want to"];
+const readingBank=[
+ {
+  "q": "1. According to the video, how does the fundamental role of a parent in the U.S. school system differ from many global school systems?",
+  "opts": [
+   "American parents are legally required to manage the school's daily funding and PTA events.",
+   "American parents are expected to actively co-manage their child's daily academic progress alongside educators.",
+   "Global school systems place much heavier emphasis on using online parent portals to trace homework.",
+   "Global teachers expect parents to handle all advanced tutoring and curriculum grading at home."
+  ],
+  "answer": 1
+ },
+ {
+  "q": "2. Based on the video, why might an immigrant parent fail to realize their child is academically struggling?",
+  "opts": [
+   "American school systems do not provide midterm grades or report cards to families.",
+   "Teachers frequently input incorrect data into the digital parent portal system.",
+   "The parent might interpret polite, coded teacher commentary as purely positive feedback.",
+   "The school district purposefully hides disciplinary issues to avoid legal complications."
+  ],
+  "answer": 2
+ },
+ {
+  "q": "3. What can be inferred about an American teacher who writes that a student is &ldquo;working somewhat below their potential&rdquo;?",
+  "opts": [
+   "The teacher believes the student is cheating on standardized assessments.",
+   "The teacher thinks the curriculum is too easy and needs to be accelerated.",
+   "The teacher is frustrated because the student has the capability to succeed but lacks focus or effort.",
+   "The teacher wants the student to be removed from the classroom environment permanently."
+  ],
+  "answer": 2
+ },
+ {
+  "q": "4. Based on the video, what kind of parent behavior do American teachers value most during a conference?",
+  "opts": [
+   "A passive parent who silently agrees with every critique without asking questions.",
+   "An assertive, collaborative parent who seeks clarity and wants to build a future solution together.",
+   "A defensive parent who brings a lawyer to challenge school district zoning laws.",
+   "A detached parent who requests that all future intervention occur strictly via automatic emails."
+  ],
+  "answer": 1
+ },
+ {
+  "q": "5. According to the video, what is the ultimate purpose of an American report card or progress evaluation?",
+  "opts": [
+   "To rank students publicly against their peers to encourage maximum competition.",
+   "To serve as an ongoing open invitation for communication and collaborative problem-solving.",
+   "To provide a final, unchangeable judgment on a child's intellectual worth and future potential.",
+   "To document behavioral issues for the sole purpose of executing a formal student suspension."
+  ],
+  "answer": 1
+ }
+];
+const vocabWords=["Academic Progress", "Attendance", "Behavioral", "Curriculum", "Disciplinary", "Syllabus", "Tardiness"];
+const vocabBank=[
+ {
+  "s": "&hellip; sudden changes in Max's recent ______ records.",
+  "a": "Attendance"
+ },
+ {
+  "s": "&hellip; his frequent morning ______ is disrupting the classroom environment.",
+  "a": "Tardiness"
+ },
+ {
+  "s": "&hellip; beginning to severely hinder his overall ______, and his mid-term grades are dropping.",
+  "a": "Academic Progress"
+ },
+ {
+  "s": "According to our school district's core seventh-grade math ______, the concepts form the foundation for high school algebra.",
+  "a": "Curriculum"
+ },
+ {
+  "s": "As clearly stated in the teacher's course ______, students who miss instruction time cannot easily make up lab points.",
+  "a": "Syllabus"
+ },
+ {
+  "s": "We want to prevent this from turning into a formal ______ matter that would require a suspension.",
+  "a": "Disciplinary"
+ },
+ {
+  "s": "Max is simply struggling with some minor ______ habits regarding cell phone distractions late at night.",
+  "a": "Behavioral"
+ }
+];
+const luBank=[
+ {
+  "q": "1. Which sentence is correct?",
+  "opts": [
+   "Max was supposed to submit his essay last night, but his computer crashed.",
+   "Max was suppose to submit his essay last night, but his computer crashed.",
+   "Max is supposed to submitted his essay last night, but his computer crashed.",
+   "Max was supposed to submitting his essay last night, but his computer crashed."
+  ],
+  "answer": 0
+ },
+ {
+  "q": "2. Which sentence is correct?",
+  "opts": [
+   "He has a zero because he should have checked the portal guidelines.",
+   "He has a zero because he must have checked the portal guidelines yesterday.",
+   "He has a zero because he would check the portal guidelines.",
+   "He has a zero because he could checked the portal guidelines yesterday."
+  ],
+  "answer": 0
+ },
+ {
+  "q": "3. Which sentence is correct?",
+  "opts": [
+   "As a student, Max ought to has paid closer attention to the class rubric.",
+   "As a student, Max ought to have paid closer attention to the class rubric.",
+   "As a student, Max ought to have pay closer attention to the class rubric.",
+   "As a student, Max ought to had paid closer attention to the class rubric."
+  ],
+  "answer": 1
+ },
+ {
+  "q": "4. Which sentence is correct?",
+  "opts": [
+   "The teacher were supposed to upload the weekly math grades on Monday morning.",
+   "The teacher was suppose to upload the weekly math grades on Monday morning.",
+   "The teacher was supposed to upload the weekly math grades on Monday morning.",
+   "The teacher was supposed to uploaded the weekly math grades on Monday morning."
+  ],
+  "answer": 2
+ },
+ {
+  "q": "5. Which sentence is correct?",
+  "opts": [
+   "To avoid future tardiness, you might wanting to check his laptop before bed.",
+   "To avoid future tardiness, you might wanted to check his laptop before bed.",
+   "To avoid future tardiness, you might want check his laptop before bed.",
+   "To avoid future tardiness, you might want to check his laptop before bed."
+  ],
+  "answer": 3
+ }
+];
+
+/* ---------- state ---------- */
+const STATE={reading:0,vocab:0,writing:0,speaking:0,lu:0,
+  writingText:"",spokenText:"",speakSecs:0};
+const MAX={reading:20,vocab:20,writing:0,speaking:25,lu:10};
+const TOTAL=100;
+
+/* ---------- class sections ---------- */
+(function(){
+  const sel=document.getElementById('classSelect');
+  CONFIG.CLASSES.forEach((c,i)=>{
+    const o=document.createElement('option');
+    o.value=i;o.textContent=c.label;sel.appendChild(o);
+  });
+})();
+
+/* ---------- navigation ---------- */
+function go(n){
+  if(n===1){
+    const nm=document.getElementById('studentName').value.trim();
+    if(!nm){alert('Please type your name first.');return;}
+  }
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s'+n).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ===================== SECTION 1 — READING ===================== */
+(function(){
+  const c=document.getElementById('readingQs');
+  readingBank.forEach((item,i)=>{
+    const d=document.createElement('div');d.className='q';
+    let h='<div class="qtext">'+item.q+'</div>';
+    item.opts.forEach((o,j)=>{
+      h+='<label class="opt" data-q="'+i+'"><input type="radio" name="r'+i+'" value="'+j+'">'+o+'</label>';
+    });
+    d.innerHTML=h;c.appendChild(d);
+  });
+  c.querySelectorAll('.opt').forEach(opt=>{
+    opt.addEventListener('click',()=>{
+      const qi=opt.dataset.q;
+      c.querySelectorAll('.opt[data-q="'+qi+'"]').forEach(o=>o.classList.remove('sel'));
+      opt.classList.add('sel');opt.querySelector('input').checked=true;
+    });
+  });
+})();
+function scoreReading(){
+  let correct=0;
+  readingBank.forEach((item,i)=>{
+    const sel=document.querySelector('input[name="r'+i+'"]:checked');
+    const wrap=document.querySelectorAll('#readingQs .q')[i];
+    if(sel){
+      const val=+sel.value;
+      wrap.querySelectorAll('.opt')[item.answer].classList.add('correct');
+      if(val===item.answer)correct++;
+      else wrap.querySelectorAll('.opt')[val].classList.add('wrong');
+    }
+  });
+  STATE.reading=Math.round(correct/readingBank.length*MAX.reading);
+}
+
+/* ===================== SECTION 2 — VOCABULARY ===================== */
+(function(){
+  const wb=document.getElementById('wordbank');
+  vocabWords.forEach(w=>{const c=document.createElement('span');c.className='chip';c.textContent=w;wb.appendChild(c);});
+  const c=document.getElementById('vocabQs');
+  vocabBank.forEach((item,i)=>{
+    const d=document.createElement('div');d.className='gap';
+    let opts='<option value="">— choose —</option>';
+    vocabWords.forEach(w=>{opts+='<option value="'+w+'">'+w+'</option>';});
+    d.innerHTML='<label>'+(i+1)+'. '+item.s+'</label><select id="v'+i+'">'+opts+'</select>';
+    c.appendChild(d);
+  });
+})();
+function scoreVocab(){
+  let correct=0;
+  vocabBank.forEach((item,i)=>{
+    const v=document.getElementById('v'+i).value;
+    if(v && v.toLowerCase()===item.a.toLowerCase())correct++;
+  });
+  STATE.vocab=Math.round(correct/vocabBank.length*MAX.vocab);
+}
+
+/* ===================== SECTION 3 — WRITING (teacher-graded) ===================== */
+function checkWriting(){
+  const txt=document.getElementById('writingText').value.trim();
+  STATE.writingText=txt;
+  const fb=document.getElementById('writingFb');
+  const words=txt.split(/\s+/).filter(Boolean);
+  const sentences=txt.split(/[.!?]+/).map(s=>s.trim()).filter(Boolean);
+  let msg='<strong>Saved \u2014 your teacher will read and grade this.</strong><br>';
+  msg+='\ud83d\udcdd '+words.length+' words \u00b7 '+sentences.length+' sentences';
+  if(words.length<15)msg+='<br>\ud83d\udca1 This looks short \u2014 try to write a bit more before moving on.';
+  fb.innerHTML=msg;fb.className='feedback show info';
+  document.getElementById('writingNext').style.display='inline-block';
+}
+
+/* ===================== SECTION 4 — SPEAKING ===================== */
+let recognition=null,recording=false,timerInt=null,secs=0;
+function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function toggleRec(){recording?stopRec():startRec();}
+function startRec(){
+  secs=0;document.getElementById('timer').textContent='0:00';
+  STATE.spokenText='';
+  const tEl=document.getElementById('transcript');
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=null;
+  if(SR){
+    try{
+      recognition=new SR();
+      recognition.continuous=true;
+      recognition.interimResults=true;
+      recognition.lang='en-US';
+      let finalT='';
+      const norm=x=>x.toLowerCase().replace(/\s+/g,' ').trim();
+      recognition.onresult=e=>{
+        let interim='';
+        for(let i=e.resultIndex;i<e.results.length;i++){
+          const t=e.results[i][0].transcript;
+          if(e.results[i].isFinal){
+            const tt=t.trim(), ft=finalT.trim();
+            if(!tt)continue;
+            /* Android Chrome marks each growing interim hypothesis as final:
+               if the new final extends everything so far, replace instead of append */
+            if(ft&&norm(tt).indexOf(norm(ft))===0){finalT=tt+' ';}
+            else if(ft&&norm(ft).indexOf(norm(tt))===0){/* duplicate/subset: skip */}
+            else{finalT+=tt+' ';}
+          } else interim+=t;
+        }
+        STATE.spokenText=(finalT+interim).trim();
+        tEl.textContent=STATE.spokenText||'Listening…';
+      };
+      recognition.onerror=ev=>{
+        if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){
+          document.getElementById('micStatus').textContent=
+            'Microphone blocked. Allow mic access in your browser, then tap Start again.';
+        } else if(ev.error==='no-speech'){
+          /* harmless on Safari — ignore */
+        } else {
+          document.getElementById('micStatus').textContent=
+            'Speech capture paused — keep speaking out loud, your time still counts.';
+        }
+      };
+      recognition.onend=()=>{
+        if(recording){try{recognition.start();}catch(e){}}
+      };
+      recognition.start();
+    }catch(e){
+      recognition=null;
+      document.getElementById('micStatus').textContent=
+        'Speech capture unavailable here — speak out loud, then press Next.';
+    }
+  } else {
+    document.getElementById('micStatus').textContent=
+      'This browser can\u2019t transcribe speech — speak out loud, then press Next.';
+  }
+  recording=true;
+  document.getElementById('recBtn').textContent='\u23f9 Stop';
+  document.getElementById('micStatus').innerHTML='<span class="pulse"></span>Recording \u2014 read your dialogue!';
+  timerInt=setInterval(()=>{secs++;document.getElementById('timer').textContent=fmt(secs);},1000);
+}
+function stopRec(){
+  recording=false;
+  if(recognition){try{recognition.onend=null;recognition.stop();}catch(e){}}
+  clearInterval(timerInt);
+  STATE.speakSecs=secs;
+  document.getElementById('recBtn').textContent='\ud83c\udfa4 Speak again';
+  document.getElementById('micStatus').textContent='Stopped. You can speak again or move on.';
+  scoreSpeaking();
+}
+function scoreSpeaking(){
+  const txt=(STATE.spokenText||'').trim();
+  const words=txt.split(/\s+/).filter(Boolean);
+  const low=txt.toLowerCase();
+  const fb=document.getElementById('speakFb');
+  let score=0;
+  const isReal=words.length>=6;
+  if(isReal){
+    if(STATE.speakSecs>=SPEAK_TARGET)score+=12;
+    else if(STATE.speakSecs>=SPEAK_TIER2)score+=9;
+    else if(STATE.speakSecs>=SPEAK_TIER3)score+=6;
+    else score+=3;
+    if(words.length>=60)score+=7;
+    else if(words.length>=30)score+=5;
+    else if(words.length>=12)score+=3;
+    else score+=1;
+    const hits=[...new Set(LESSON_WORDS.filter(w=>low.includes(w)))];
+    score+=Math.min(hits.length,3)*2;
+  }
+  score=Math.min(score,MAX.speaking);
+  STATE.speaking=score;
+  let msg='<strong>'+(isReal?'Great — '+score+'/'+MAX.speaking+' points.':'Speak a little more to score points — but you can still continue.')+'</strong><br>';
+  msg+='🎙️ '+STATE.speakSecs+' seconds · '+words.length+' words spoken';
+  fb.innerHTML=msg;fb.className='feedback show '+(score>=15?'ok':'info');
+}
+
+/* ===================== SECTION 5 — LANGUAGE IN USE ===================== */
+(function(){
+  const c=document.getElementById('luQs');
+  luBank.forEach((item,i)=>{
+    const d=document.createElement('div');d.className='q';
+    let h='<div class="qtext">'+item.q+'</div>';
+    item.opts.forEach((o,j)=>{
+      const letter=String.fromCharCode(65+j);
+      h+='<label class="opt" data-q="'+i+'"><input type="radio" name="lu'+i+'" value="'+j+'"><strong>'+letter+')</strong> '+o+'</label>';
+    });
+    d.innerHTML=h;c.appendChild(d);
+  });
+  c.querySelectorAll('.opt').forEach(opt=>{
+    opt.addEventListener('click',()=>{
+      const qi=opt.dataset.q;
+      c.querySelectorAll('.opt[data-q="'+qi+'"]').forEach(o=>o.classList.remove('sel'));
+      opt.classList.add('sel');opt.querySelector('input').checked=true;
+    });
+  });
+})();
+function scoreLU(){
+  let correct=0;
+  luBank.forEach((item,i)=>{
+    const sel=document.querySelector('input[name="lu'+i+'"]:checked');
+    const wrap=document.querySelectorAll('#luQs .q')[i];
+    if(sel){
+      const val=+sel.value;
+      wrap.querySelectorAll('.opt')[item.answer].classList.add('correct');
+      if(val===item.answer)correct++;
+      else wrap.querySelectorAll('.opt')[val].classList.add('wrong');
+    }
+  });
+  STATE.lu=Math.round(correct/luBank.length*MAX.lu);
+}
+
+/* ===================== RESULTS ===================== */
+function finish(){
+  scoreReading();scoreVocab();scoreLU();
+  if(!STATE.writingText)STATE.writingText=document.getElementById('writingText').value.trim();
+  const pct=Math.round(
+    (STATE.reading+STATE.vocab+STATE.writing+STATE.speaking+STATE.lu)/TOTAL*100);
+  document.getElementById('finalPct').textContent=pct+'%';
+  document.getElementById('finalLine').textContent=
+    (pct>=75?'Top marks on the auto-graded sections!':pct>=50?'Good effort — keep practicing!':'Completed!');
+  const bd=document.getElementById('breakdown');
+  bd.innerHTML=
+    row(READING_LABEL,STATE.reading,MAX.reading)+
+    row('Vocabulary',STATE.vocab,MAX.vocab)+
+    writingRow()+
+    row(SPEAKING_LABEL,STATE.speaking,MAX.speaking)+
+    row(LU_LABEL,STATE.lu,MAX.lu)+
+    row('Total',STATE.reading+STATE.vocab+STATE.writing+STATE.speaking+STATE.lu,TOTAL);
+  go(6);
+}
+function row(label,got,max){
+  return '<div><span>'+label+'</span><span>'+got+' / '+max+'</span></div>';
+}
+function writingRow(){
+  return '<div><span>Writing</span><span style="color:var(--purple-light);">graded by teacher</span></div>';
+}
+
+/* ===================== SILENT SUBMIT ===================== */
+function submitAll(){
+  const pct=Math.round(
+    (STATE.reading+STATE.vocab+STATE.writing+STATE.speaking+STATE.lu)/TOTAL*100);
+  const E=CONFIG.ENTRY;
+  const data={};
+  const chosen=CONFIG.CLASSES[+document.getElementById('classSelect').value]||CONFIG.CLASSES[0];
+  data[E.studentName]=document.getElementById('studentName').value.trim();
+  data[E.classCode]=chosen.code;
+  data[E.session]=CONFIG.SESSION_LABEL;
+  data[E.listening]=STATE.reading;
+  data[E.vocab]=STATE.vocab;
+  data[E.writing]="";
+  data[E.speaking]=STATE.speaking;
+  data[E.grammar]=STATE.lu;
+  data[E.percent]=pct;
+  data[E.writingText]=STATE.writingText||'(none)';
+  data[E.aiFeedback]=STATE.spokenText||'';
+  data[E.teacher]=chosen.teacher;
+
+  const f=document.createElement('form');
+  f.action=CONFIG.FORM_URL;f.method='POST';f.target='sqa_sink';
+  for(const k in data){
+    const inp=document.createElement('input');
+    inp.type='hidden';inp.name=k;inp.value=data[k];f.appendChild(inp);
+  }
+  document.body.appendChild(f);
+  try{f.submit();}catch(e){}
+  document.getElementById('finishBtn').style.display='none';
+  document.getElementById('successMsg').classList.add('show');
+  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
