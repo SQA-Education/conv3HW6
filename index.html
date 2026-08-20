@@ -733,6 +733,7 @@ function submitAll(){
   }
   document.body.appendChild(f);
   try{f.submit();}catch(e){}
+  try{fetch("https://ponilnhyehnzycspksah.supabase.co/functions/v1/submit-final",{method:"POST",headers:{"Content-Type":"application/json","apikey":"sb_publishable_YWM3O7i8aHWBGOZM-vAnEw_bR4XStKm","Authorization":"Bearer sb_publishable_YWM3O7i8aHWBGOZM-vAnEw_bR4XStKm"},body:JSON.stringify({name:document.getElementById('studentName').value.trim(),className:chosen.code,level:"Conversation",session:6,writingText:STATE.writingText||"",speakingTranscript:STATE.spokenText||"",scores:{reading:STATE.reading,vocabulary:STATE.vocab,speaking:STATE.speaking,grammar:STATE.lu,percent:pct}})}).catch(function(){});}catch(e){}
   document.getElementById('finishBtn').style.display='none';
   document.getElementById('successMsg').classList.add('show');
   window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
