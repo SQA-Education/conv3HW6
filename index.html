@@ -497,13 +497,14 @@ function go(n){
 function scoreReading(){
   let correct=0;
   readingBank.forEach((item,i)=>{
-    const sel=document.querySelector('input[name="r'+i+'"]:checked');
     const wrap=document.querySelectorAll('#readingQs .q')[i];
-    if(sel){
-      const val=+sel.value;
-      wrap.querySelectorAll('.opt')[item.answer].classList.add('correct');
+    const opts=wrap?wrap.querySelectorAll('.opt'):[];
+    if(opts[item.answer])opts[item.answer].classList.add('correct');
+    const selOpt=wrap?wrap.querySelector('.opt.sel'):null;
+    if(selOpt){
+      const val=+selOpt.querySelector('input').value;
       if(val===item.answer)correct++;
-      else wrap.querySelectorAll('.opt')[val].classList.add('wrong');
+      else selOpt.classList.add('wrong');
     }
   });
   STATE.reading=Math.round(correct/readingBank.length*MAX.reading);
@@ -667,20 +668,38 @@ function scoreSpeaking(){
 function scoreLU(){
   let correct=0;
   luBank.forEach((item,i)=>{
-    const sel=document.querySelector('input[name="lu'+i+'"]:checked');
     const wrap=document.querySelectorAll('#luQs .q')[i];
-    if(sel){
-      const val=+sel.value;
-      wrap.querySelectorAll('.opt')[item.answer].classList.add('correct');
+    const opts=wrap?wrap.querySelectorAll('.opt'):[];
+    if(opts[item.answer])opts[item.answer].classList.add('correct');
+    const selOpt=wrap?wrap.querySelector('.opt.sel'):null;
+    if(selOpt){
+      const val=+selOpt.querySelector('input').value;
       if(val===item.answer)correct++;
-      else wrap.querySelectorAll('.opt')[val].classList.add('wrong');
+      else selOpt.classList.add('wrong');
     }
   });
   STATE.lu=Math.round(correct/luBank.length*MAX.lu);
 }
 
 /* ===================== RESULTS ===================== */
+function collectAnswers(){
+  var grab=function(bank,qsel){ return bank.map(function(item,i){
+    var wrap=document.querySelectorAll(qsel+' .q')[i];
+    var sel=wrap?wrap.querySelector('.opt.sel'):null;
+    var chosen=sel?+sel.querySelector('input').value:null;
+    var opts=item.opts||[];
+    return {q:i+1,chosen:chosen,chosenText:(chosen!=null?opts[chosen]:null),correct:item.answer,correctText:opts[item.answer],ok:(chosen===item.answer)};
+  }); };
+  var vocab=vocabBank.map(function(item,i){ var el=document.getElementById('v'+i); var v=el?el.value:''; return {q:i+1,chosen:v||null,correct:item.a,ok:!!(v&&v.toLowerCase()===item.a.toLowerCase())}; });
+  return {reading:grab(readingBank,'#readingQs'),grammar:grab(luBank,'#luQs'),vocab:vocab};
+}
 function finish(){
+  var _gB=document.querySelectorAll('#luQs .opt.sel').length<luBank.length;
+  var _rB=document.querySelectorAll('#readingQs .opt.sel').length<readingBank.length;
+  if(_gB||_rB){
+    var _w=[_rB?'the comprehension questions':'',_gB?'the grammar (Language in Use) questions':''].filter(Boolean).join(' and ');
+    if(confirm("It looks like you haven't answered all of "+_w+".\n\nPress OK to go back and finish them, or Cancel to submit as is.")){ go(_gB?5:1); return; }
+  }
   scoreReading();scoreVocab();scoreLU();
   if(!STATE.writingText)STATE.writingText=document.getElementById('writingText').value.trim();
   const pct=Math.round(
@@ -733,7 +752,7 @@ function submitAll(){
   }
   document.body.appendChild(f);
   try{f.submit();}catch(e){}
-  try{fetch("https://ponilnhyehnzycspksah.supabase.co/functions/v1/submit-final",{method:"POST",headers:{"Content-Type":"application/json","apikey":"sb_publishable_YWM3O7i8aHWBGOZM-vAnEw_bR4XStKm","Authorization":"Bearer sb_publishable_YWM3O7i8aHWBGOZM-vAnEw_bR4XStKm"},body:JSON.stringify({sid:(new URLSearchParams(location.search).get('sid')||''),email:(new URLSearchParams(location.search).get('email')||''),name:document.getElementById('studentName').value.trim(),className:chosen.code,level:"Conversation",session:6,writingText:STATE.writingText||"",speakingTranscript:STATE.spokenText||"",scores:{reading:STATE.reading,vocabulary:STATE.vocab,speaking:STATE.speaking,grammar:STATE.lu,percent:pct}})}).catch(function(){});}catch(e){}
+  try{fetch("https://ponilnhyehnzycspksah.supabase.co/functions/v1/submit-final",{method:"POST",headers:{"Content-Type":"application/json","apikey":"sb_publishable_YWM3O7i8aHWBGOZM-vAnEw_bR4XStKm","Authorization":"Bearer sb_publishable_YWM3O7i8aHWBGOZM-vAnEw_bR4XStKm"},body:JSON.stringify({sid:(new URLSearchParams(location.search).get('sid')||''),email:(new URLSearchParams(location.search).get('email')||''),name:document.getElementById('studentName').value.trim(),className:chosen.code,level:"Conversation",session:6,writingText:STATE.writingText||"",speakingTranscript:STATE.spokenText||"",answers:collectAnswers(),scores:{reading:STATE.reading,vocabulary:STATE.vocab,speaking:STATE.speaking,grammar:STATE.lu,percent:pct}})}).catch(function(){});}catch(e){}
   document.getElementById('finishBtn').style.display='none';
   document.getElementById('successMsg').classList.add('show');
   window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
